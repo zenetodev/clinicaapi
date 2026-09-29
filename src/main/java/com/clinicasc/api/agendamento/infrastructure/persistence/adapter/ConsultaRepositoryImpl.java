@@ -10,7 +10,9 @@ import com.clinicasc.api.agendamento.infrastructure.persistence.entity.ConsultaE
 import com.clinicasc.api.agendamento.infrastructure.persistence.repository.SpringDataConsultaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -32,6 +34,21 @@ public class ConsultaRepositoryImpl implements ConsultaRepository {
     @Override
     public Optional<Consulta> buscarPorId(ConsultaId id) {
         return springDataConsultaRepository.findById(id.valor()).map(this::toDomain);
+    }
+
+    @Override
+    public List<Consulta> listar(UUID pacienteId, UUID dentistaId, String status,
+                                 LocalDateTime dataHoraInicio, LocalDateTime dataHoraFim) {
+        return springDataConsultaRepository.listar(
+                        pacienteId,
+                        dentistaId,
+                        status,
+                        dataHoraInicio,
+                        dataHoraFim
+                )
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override

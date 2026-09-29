@@ -4,21 +4,27 @@ import com.clinicasc.api.agendamento.application.dto.AgendarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.CancelarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConfirmarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
+import com.clinicasc.api.agendamento.application.dto.ListarConsultasInput;
 import com.clinicasc.api.agendamento.application.usecase.AgendarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.BuscarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.CancelarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.ConfirmarConsultaUseCase;
+import com.clinicasc.api.agendamento.application.usecase.ListarConsultasUseCase;
+import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/agendamentos")
@@ -28,15 +34,18 @@ public class ConsultaController {
     private final BuscarConsultaUseCase buscarConsultaUseCase;
     private final CancelarConsultaUseCase cancelarConsultaUseCase;
     private final ConfirmarConsultaUseCase confirmarConsultaUseCase;
+    private final ListarConsultasUseCase listarConsultasUseCase;
 
     public ConsultaController(AgendarConsultaUseCase agendarConsultaUseCase,
                               BuscarConsultaUseCase buscarConsultaUseCase,
                               CancelarConsultaUseCase cancelarConsultaUseCase,
-                              ConfirmarConsultaUseCase confirmarConsultaUseCase) {
+                              ConfirmarConsultaUseCase confirmarConsultaUseCase,
+                              ListarConsultasUseCase listarConsultasUseCase) {
         this.agendarConsultaUseCase = agendarConsultaUseCase;
         this.buscarConsultaUseCase = buscarConsultaUseCase;
         this.cancelarConsultaUseCase = cancelarConsultaUseCase;
         this.confirmarConsultaUseCase = confirmarConsultaUseCase;
+        this.listarConsultasUseCase = listarConsultasUseCase;
     }
 
     @PostMapping
@@ -50,6 +59,19 @@ public class ConsultaController {
         return buscarConsultaUseCase.executar(consultaId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ConsultaOutput>> listar(
+            @RequestParam(required = false) UUID pacienteId,
+            @RequestParam(required = false) UUID dentistaId,
+            @RequestParam(required = false) StatusConsulta status,
+            @RequestParam(required = false) LocalDateTime dataHoraInicio,
+            @RequestParam(required = false) LocalDateTime dataHoraFim) {
+        ListarConsultasInput input = new ListarConsultasInput(
+                pacienteId, dentistaId, status, dataHoraInicio, dataHoraFim
+        );
+        return ResponseEntity.ok(listarConsultasUseCase.executar(input));
     }
 
     @PostMapping("/cancelar")

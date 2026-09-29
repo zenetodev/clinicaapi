@@ -6,9 +6,28 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public interface SpringDataConsultaRepository extends JpaRepository<ConsultaEntity, UUID> {
+
+    @Query("""
+            select c
+            from ConsultaEntity c
+            where (:pacienteId is null or c.pacienteId = :pacienteId)
+              and (:dentistaId is null or c.dentistaId = :dentistaId)
+              and (:status is null or c.status = :status)
+              and (:dataHoraInicio is null or c.dataHoraInicio >= :dataHoraInicio)
+              and (:dataHoraFim is null or c.dataHoraFim <= :dataHoraFim)
+            order by c.dataHoraInicio
+            """)
+    List<ConsultaEntity> listar(
+            @Param("pacienteId") UUID pacienteId,
+            @Param("dentistaId") UUID dentistaId,
+            @Param("status") String status,
+            @Param("dataHoraInicio") LocalDateTime dataHoraInicio,
+            @Param("dataHoraFim") LocalDateTime dataHoraFim
+    );
 
     @Query("""
             select (count(c) > 0)

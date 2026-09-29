@@ -1,6 +1,8 @@
 package com.clinicasc.api.agendamento.infrastructure.persistence.repository;
 
 import com.clinicasc.api.agendamento.infrastructure.persistence.entity.ConsultaEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,12 +23,13 @@ public interface SpringDataConsultaRepository extends JpaRepository<ConsultaEnti
               and (:dataHoraFim is null or c.dataHoraFim <= :dataHoraFim)
             order by c.dataHoraInicio
             """)
-    List<ConsultaEntity> listar(
+        Page<ConsultaEntity> listar(
             @Param("pacienteId") UUID pacienteId,
             @Param("dentistaId") UUID dentistaId,
             @Param("status") String status,
             @Param("dataHoraInicio") LocalDateTime dataHoraInicio,
-            @Param("dataHoraFim") LocalDateTime dataHoraFim
+            @Param("dataHoraFim") LocalDateTime dataHoraFim,
+            Pageable pageable
     );
 
     @Query("""

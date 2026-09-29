@@ -1,6 +1,7 @@
 package com.clinicasc.api.agendamento.domain.repository;
 
 import com.clinicasc.api.agendamento.domain.model.Consulta;
+import com.clinicasc.api.agendamento.domain.model.ConsultaPage;
 import com.clinicasc.api.agendamento.domain.model.ConsultaId;
 import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
 
@@ -15,8 +16,9 @@ public interface ConsultaRepository {
 
     Optional<Consulta> buscarPorId(ConsultaId id);
 
-    List<Consulta> listar(UUID pacienteId, UUID dentistaId, String status,
-                          LocalDateTime dataHoraInicio, LocalDateTime dataHoraFim);
+    ConsultaPage listar(UUID pacienteId, UUID dentistaId, String status,
+                        LocalDateTime dataHoraInicio, LocalDateTime dataHoraFim,
+                        int pagina, int tamanho);
 
     boolean existeConflitoDeHorario(UUID dentistaId, PeriodoConsulta periodo);
 }

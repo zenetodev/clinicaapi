@@ -1,6 +1,7 @@
 package com.clinicasc.api.agendamento.infrastructure.rest.controller;
 
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
+import com.clinicasc.api.agendamento.application.dto.ConsultaPageOutput;
 import com.clinicasc.api.agendamento.application.usecase.AgendarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.BuscarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.CancelarConsultaUseCase;
@@ -94,16 +95,22 @@ class ConsultaControllerTest {
     void deveListarConsultasComFiltros() throws Exception {
         UUID pacienteId = UUID.randomUUID();
         UUID dentistaId = UUID.randomUUID();
-        when(listarConsultasUseCase.executar(any())).thenReturn(List.of(novaConsulta(UUID.randomUUID())));
+        when(listarConsultasUseCase.executar(any())).thenReturn(new ConsultaPageOutput(
+            List.of(novaConsulta(UUID.randomUUID())), 0, 10, 1, 1
+        ));
 
         mockMvc.perform(get("/agendamentos")
                         .param("pacienteId", pacienteId.toString())
                         .param("dentistaId", dentistaId.toString())
                         .param("status", "AGENDADA")
                         .param("dataHoraInicio", "2030-01-01T00:00:00")
-                        .param("dataHoraFim", "2030-01-31T23:59:59"))
+                        .param("dataHoraFim", "2030-01-31T23:59:59")
+                        .param("pagina", "0")
+                        .param("tamanho", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].status").value("AGENDADA"));
+                    .andExpect(jsonPath("$.consultas[0].status").value("AGENDADA"))
+                    .andExpect(jsonPath("$.totalElementos").value(1))
+                    .andExpect(jsonPath("$.totalPaginas").value(1));
 
         verify(listarConsultasUseCase).executar(any());
     }

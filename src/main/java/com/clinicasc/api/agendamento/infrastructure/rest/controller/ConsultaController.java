@@ -4,6 +4,7 @@ import com.clinicasc.api.agendamento.application.dto.AgendarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.CancelarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConfirmarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
+import com.clinicasc.api.agendamento.application.dto.ConsultaPageOutput;
 import com.clinicasc.api.agendamento.application.dto.ListarConsultasInput;
 import com.clinicasc.api.agendamento.application.usecase.AgendarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.BuscarConsultaUseCase;
@@ -62,14 +63,16 @@ public class ConsultaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ConsultaOutput>> listar(
+    public ResponseEntity<ConsultaPageOutput> listar(
             @RequestParam(required = false) UUID pacienteId,
             @RequestParam(required = false) UUID dentistaId,
             @RequestParam(required = false) StatusConsulta status,
             @RequestParam(required = false) LocalDateTime dataHoraInicio,
-            @RequestParam(required = false) LocalDateTime dataHoraFim) {
+            @RequestParam(required = false) LocalDateTime dataHoraFim,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamanho) {
         ListarConsultasInput input = new ListarConsultasInput(
-                pacienteId, dentistaId, status, dataHoraInicio, dataHoraFim
+                pacienteId, dentistaId, status, dataHoraInicio, dataHoraFim, pagina, tamanho
         );
         return ResponseEntity.ok(listarConsultasUseCase.executar(input));
     }

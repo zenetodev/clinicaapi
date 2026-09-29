@@ -10,6 +10,8 @@ public record ListarConsultasInput(
         UUID dentistaId,
         StatusConsulta status,
         LocalDateTime dataHoraInicio,
-        LocalDateTime dataHoraFim
+        LocalDateTime dataHoraFim,
+        int pagina,
+        int tamanho
 ) {
 }

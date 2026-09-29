@@ -2,6 +2,7 @@ package com.clinicasc.api.agendamento.infrastructure.persistence.adapter;
 
 import com.clinicasc.api.agendamento.domain.exception.RegraDeNegocioException;
 import com.clinicasc.api.agendamento.domain.model.Consulta;
+import com.clinicasc.api.agendamento.domain.model.ConsultaPage;
 import com.clinicasc.api.agendamento.domain.model.ConsultaId;
 import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
@@ -9,6 +10,8 @@ import com.clinicasc.api.agendamento.domain.repository.ConsultaRepository;
 import com.clinicasc.api.agendamento.infrastructure.persistence.entity.ConsultaEntity;
 import com.clinicasc.api.agendamento.infrastructure.persistence.repository.SpringDataConsultaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -37,18 +40,26 @@ public class ConsultaRepositoryImpl implements ConsultaRepository {
     }
 
     @Override
-    public List<Consulta> listar(UUID pacienteId, UUID dentistaId, String status,
-                                 LocalDateTime dataHoraInicio, LocalDateTime dataHoraFim) {
-        return springDataConsultaRepository.listar(
+        public ConsultaPage listar(UUID pacienteId, UUID dentistaId, String status,
+                       LocalDateTime dataHoraInicio, LocalDateTime dataHoraFim,
+                       int pagina, int tamanho) {
+        Page<ConsultaEntity> page = springDataConsultaRepository.listar(
                         pacienteId,
                         dentistaId,
                         status,
                         dataHoraInicio,
-                        dataHoraFim
-                )
+                dataHoraFim,
+                PageRequest.of(pagina, tamanho)
+            );
+        return new ConsultaPage(
+            page.getContent()
                 .stream()
                 .map(this::toDomain)
-                .toList();
+            .toList(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements()
+        );
     }
 
     @Override

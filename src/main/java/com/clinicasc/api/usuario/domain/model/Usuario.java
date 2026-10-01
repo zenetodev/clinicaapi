@@ -10,16 +10,29 @@ public class Usuario {
     private final UUID id;
     private final String nome;
     private final String email;
+    private final String senhaHash;
     private final TipoUsuario tipo;
 
-    public Usuario(String nome, String email, TipoUsuario tipo) {
-        this.id = UUID.randomUUID();
+    public Usuario(String nome, String email, String senhaHash, TipoUsuario tipo) {
+        this(UUID.randomUUID(), nome, email, senhaHash, tipo);
+    }
+
+    private Usuario(UUID id, String nome, String email, String senhaHash, TipoUsuario tipo) {
+        if (id == null) {
+            throw new RegraDeNegocioException("O identificador do usuário é obrigatório.");
+        }
+        this.id = id;
         this.nome = normalizarNome(nome);
         this.email = normalizarEmail(email);
+        this.senhaHash = normalizarSenhaHash(senhaHash);
         if (tipo == null) {
             throw new RegraDeNegocioException("O tipo do usuário é obrigatório.");
         }
         this.tipo = tipo;
+    }
+
+    public static Usuario reidratar(UUID id, String nome, String email, String senhaHash, TipoUsuario tipo) {
+        return new Usuario(id, nome, email, senhaHash, tipo);
     }
 
     public UUID getId() {
@@ -32,6 +45,10 @@ public class Usuario {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getSenhaHash() {
+        return senhaHash;
     }
 
     public TipoUsuario getTipo() {
@@ -50,5 +67,12 @@ public class Usuario {
             throw new RegraDeNegocioException("O e-mail do usuário é obrigatório.");
         }
         return valor.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizarSenhaHash(String valor) {
+        if (valor == null || valor.isBlank()) {
+            throw new RegraDeNegocioException("O hash da senha do usuário é obrigatório.");
+        }
+        return valor;
     }
 }

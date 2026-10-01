@@ -5,6 +5,7 @@ import com.clinicasc.api.usuario.application.dto.CriarUsuarioInput;
 import com.clinicasc.api.usuario.application.dto.UsuarioOutput;
 import com.clinicasc.api.usuario.domain.model.Usuario;
 import com.clinicasc.api.usuario.domain.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class CriarUsuarioUseCase {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public CriarUsuarioUseCase(UsuarioRepository usuarioRepository) {
+    public CriarUsuarioUseCase(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -24,7 +27,7 @@ public class CriarUsuarioUseCase {
             throw new RegraDeNegocioException("Já existe um usuário cadastrado com o e-mail informado.");
         }
 
-        Usuario usuario = new Usuario(input.nome(), email, input.tipo());
+        Usuario usuario = new Usuario(input.nome(), email, passwordEncoder.encode(input.senha()), input.tipo());
         Usuario salvo = usuarioRepository.salvar(usuario);
         return new UsuarioOutput(salvo.getId(), salvo.getNome(), salvo.getEmail(), salvo.getTipo());
     }

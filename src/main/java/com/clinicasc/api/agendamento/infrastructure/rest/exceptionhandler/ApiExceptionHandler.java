@@ -1,6 +1,7 @@
 package com.clinicasc.api.agendamento.infrastructure.rest.exceptionhandler;
 
 import com.clinicasc.api.agendamento.domain.exception.RegraDeNegocioException;
+import com.clinicasc.api.usuario.domain.exception.FalhaAutenticacaoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -20,6 +21,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ErroResponse> handleRegraDeNegocio(RegraDeNegocioException exception) {
         ErroResponse erro = new ErroResponse(exception.getMessage(), OffsetDateTime.now(), Map.of());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+    }
+
+    @ExceptionHandler(FalhaAutenticacaoException.class)
+    public ResponseEntity<ErroResponse> handleFalhaAutenticacao(FalhaAutenticacaoException exception) {
+        ErroResponse erro = new ErroResponse(exception.getMessage(), OffsetDateTime.now(), Map.of());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
     }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -10,6 +10,8 @@ import jakarta.validation.constraints.Email;
 
 import java.util.UUID;
 
+import com.clinicasc.api.usuario.domain.model.TipoUsuario;
+
 @Entity
 @Table(name = "usuarios")
 public class UsuarioEntity {
@@ -25,6 +27,9 @@ public class UsuarioEntity {
     @Email
     private String email;
 
+    @Column(name = "senha_hash", length = 100)
+    private String senhaHash;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private com.clinicasc.api.usuario.domain.model.TipoUsuario tipo;
@@ -32,11 +37,12 @@ public class UsuarioEntity {
     protected UsuarioEntity() {
     }
 
-    public UsuarioEntity(UUID id, String nome, String email,
+    public UsuarioEntity(UUID id, String nome, String email, String senhaHash,
                          com.clinicasc.api.usuario.domain.model.TipoUsuario tipo) {
         this.id = id;
         this.nome = nome;
         this.email = email;
+        this.senhaHash = senhaHash;
         this.tipo = tipo;
     }
 
@@ -52,7 +58,11 @@ public class UsuarioEntity {
         return email;
     }
 
-    public com.clinicasc.api.usuario.domain.model.TipoUsuario getTipo() {
+    public String getSenhaHash() {
+        return senhaHash;
+    }
+
+    public TipoUsuario getTipo() {
         return tipo;
     }
 }

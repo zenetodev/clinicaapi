@@ -2,12 +2,14 @@ package com.clinicasc.api.agendamento.application.usecase;
 
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
 import com.clinicasc.api.agendamento.application.dto.ListarConsultasInput;
+import com.clinicasc.api.agendamento.application.dto.UsuarioAutenticado;
 import com.clinicasc.api.agendamento.domain.exception.RegraDeNegocioException;
 import com.clinicasc.api.agendamento.domain.model.Consulta;
 import com.clinicasc.api.agendamento.domain.model.ConsultaId;
 import com.clinicasc.api.agendamento.domain.model.ConsultaPage;
 import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
+import com.clinicasc.api.usuario.domain.model.TipoUsuario;
 import com.clinicasc.api.agendamento.domain.repository.ConsultaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +45,8 @@ class ListarConsultasUseCaseTest {
             .thenReturn(new ConsultaPage(List.of(consulta), 0, 10, 1));
 
         var resultado = useCase.executar(
-            new ListarConsultasInput(pacienteId, null, StatusConsulta.AGENDADA, inicio, fim, 0, 10)
+                new ListarConsultasInput(null, null, StatusConsulta.AGENDADA, inicio, fim, 0, 10),
+                new UsuarioAutenticado(pacienteId, TipoUsuario.PACIENTE)
         );
 
         assertEquals(1, resultado.consultas().size());
@@ -54,10 +57,14 @@ class ListarConsultasUseCaseTest {
 
     @Test
     void deveRetornarListaVaziaQuandoNaoHouverConsultas() {
-        when(consultaRepository.listar(null, null, null, null, null, 0, 20))
+        UUID pacienteId = UUID.randomUUID();
+        when(consultaRepository.listar(pacienteId, null, null, null, null, 0, 20))
             .thenReturn(new ConsultaPage(List.of(), 0, 20, 0));
 
-        var resultado = useCase.executar(new ListarConsultasInput(null, null, null, null, null, 0, 20));
+        var resultado = useCase.executar(
+            new ListarConsultasInput(null, null, null, null, null, 0, 20),
+            new UsuarioAutenticado(pacienteId, TipoUsuario.PACIENTE)
+        );
 
         assertEquals(List.of(), resultado.consultas());
         assertEquals(0, resultado.totalPaginas());
@@ -66,7 +73,8 @@ class ListarConsultasUseCaseTest {
     @Test
     void deveRejeitarFiltroComApenasUmaData() {
         assertThrows(RegraDeNegocioException.class, () -> useCase.executar(
-            new ListarConsultasInput(null, null, null, LocalDateTime.now(), null, 0, 20)
+            new ListarConsultasInput(null, null, null, LocalDateTime.now(), null, 0, 20),
+            new UsuarioAutenticado(UUID.randomUUID(), TipoUsuario.PACIENTE)
         ));
     }
 

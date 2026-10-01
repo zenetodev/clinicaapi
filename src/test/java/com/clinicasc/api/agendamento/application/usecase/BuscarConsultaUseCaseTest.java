@@ -1,10 +1,12 @@
 package com.clinicasc.api.agendamento.application.usecase;
 
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
+import com.clinicasc.api.agendamento.application.dto.UsuarioAutenticado;
 import com.clinicasc.api.agendamento.domain.model.Consulta;
 import com.clinicasc.api.agendamento.domain.model.ConsultaId;
 import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
+import com.clinicasc.api.usuario.domain.model.TipoUsuario;
 import com.clinicasc.api.agendamento.domain.repository.ConsultaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,10 +34,14 @@ class BuscarConsultaUseCaseTest {
     @Test
     void deveRetornarConsultaQuandoIdExistir() {
         UUID consultaId = UUID.randomUUID();
-        Consulta consulta = novaConsulta(consultaId);
+        UUID pacienteId = UUID.randomUUID();
+        Consulta consulta = novaConsulta(consultaId, pacienteId);
         when(consultaRepository.buscarPorId(ConsultaId.de(consultaId))).thenReturn(Optional.of(consulta));
 
-        Optional<ConsultaOutput> resultado = useCase.executar(consultaId);
+        Optional<ConsultaOutput> resultado = useCase.executar(
+            consultaId,
+            new UsuarioAutenticado(pacienteId, TipoUsuario.PACIENTE)
+        );
 
         assertTrue(resultado.isPresent());
         assertEquals(consultaId, resultado.get().id());
@@ -47,15 +53,18 @@ class BuscarConsultaUseCaseTest {
         UUID consultaId = UUID.randomUUID();
         when(consultaRepository.buscarPorId(ConsultaId.de(consultaId))).thenReturn(Optional.empty());
 
-        Optional<ConsultaOutput> resultado = useCase.executar(consultaId);
+        Optional<ConsultaOutput> resultado = useCase.executar(
+            consultaId,
+            new UsuarioAutenticado(UUID.randomUUID(), TipoUsuario.PACIENTE)
+        );
 
         assertTrue(resultado.isEmpty());
     }
 
-    private Consulta novaConsulta(UUID consultaId) {
+    private Consulta novaConsulta(UUID consultaId, UUID pacienteId) {
         return new Consulta(
                 ConsultaId.de(consultaId),
-                UUID.randomUUID(),
+                pacienteId,
                 UUID.randomUUID(),
                 new PeriodoConsulta(LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(1)),
                 StatusConsulta.AGENDADA,

@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -96,7 +97,7 @@ class ConsultaControllerTest {
     @Test
     void deveRetornar404QuandoConsultaNaoForEncontrada() throws Exception {
         UUID consultaId = UUID.randomUUID();
-        when(buscarConsultaUseCase.executar(consultaId)).thenReturn(Optional.empty());
+        when(buscarConsultaUseCase.executar(eq(consultaId), any())).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/agendamentos/{consultaId}", consultaId)
                         .with(user(PACIENTE_ID.toString()).roles("PACIENTE")))
@@ -107,7 +108,7 @@ class ConsultaControllerTest {
     void deveListarConsultasComFiltros() throws Exception {
         UUID pacienteId = UUID.randomUUID();
         UUID dentistaId = UUID.randomUUID();
-        when(listarConsultasUseCase.executar(any())).thenReturn(new ConsultaPageOutput(
+        when(listarConsultasUseCase.executar(any(), any())).thenReturn(new ConsultaPageOutput(
             List.of(novaConsulta(UUID.randomUUID())), 0, 10, 1, 1
         ));
 
@@ -125,7 +126,7 @@ class ConsultaControllerTest {
                     .andExpect(jsonPath("$.totalElementos").value(1))
                     .andExpect(jsonPath("$.totalPaginas").value(1));
 
-        verify(listarConsultasUseCase).executar(any());
+        verify(listarConsultasUseCase).executar(any(), any());
     }
 
     @Test

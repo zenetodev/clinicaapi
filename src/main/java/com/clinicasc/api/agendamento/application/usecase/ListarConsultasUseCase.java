@@ -3,6 +3,7 @@ package com.clinicasc.api.agendamento.application.usecase;
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaPageOutput;
 import com.clinicasc.api.agendamento.application.dto.ListarConsultasInput;
+import com.clinicasc.api.agendamento.application.dto.UsuarioAutenticado;
 import com.clinicasc.api.agendamento.domain.exception.RegraDeNegocioException;
 import com.clinicasc.api.agendamento.domain.model.Consulta;
 import com.clinicasc.api.agendamento.domain.model.ConsultaPage;
@@ -20,7 +21,8 @@ public class ListarConsultasUseCase {
         this.consultaRepository = consultaRepository;
     }
 
-        public ConsultaPageOutput executar(ListarConsultasInput input) {
+        public ConsultaPageOutput executar(ListarConsultasInput input, UsuarioAutenticado usuario) {
+            input = restringirAoUsuario(input, usuario);
         validarPeriodo(input);
         validarPaginacao(input);
 
@@ -42,6 +44,29 @@ public class ListarConsultasUseCase {
             pagina.tamanho(),
             pagina.totalElementos(),
             pagina.totalPaginas()
+        );
+    }
+
+    private ListarConsultasInput restringirAoUsuario(ListarConsultasInput input, UsuarioAutenticado usuario) {
+        if (usuario.tipo() == com.clinicasc.api.usuario.domain.model.TipoUsuario.PACIENTE) {
+            if (input.pacienteId() != null && !usuario.id().equals(input.pacienteId())) {
+                throw new com.clinicasc.api.agendamento.domain.exception.AcessoNegadoException(
+                        "O paciente só pode consultar seus próprios agendamentos."
+                );
+            }
+            return new ListarConsultasInput(
+                    usuario.id(), input.dentistaId(), input.status(), input.dataHoraInicio(),
+                    input.dataHoraFim(), input.pagina(), input.tamanho()
+            );
+        }
+        if (input.dentistaId() != null && !usuario.id().equals(input.dentistaId())) {
+            throw new com.clinicasc.api.agendamento.domain.exception.AcessoNegadoException(
+                    "O dentista só pode consultar seus próprios agendamentos."
+            );
+        }
+        return new ListarConsultasInput(
+                input.pacienteId(), usuario.id(), input.status(), input.dataHoraInicio(),
+                input.dataHoraFim(), input.pagina(), input.tamanho()
         );
     }
 

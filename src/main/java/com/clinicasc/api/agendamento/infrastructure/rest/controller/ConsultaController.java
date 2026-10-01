@@ -28,7 +28,6 @@ import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/agendamentos")
@@ -60,8 +59,9 @@ public class ConsultaController {
     }
 
     @GetMapping("/{consultaId}")
-    public ResponseEntity<ConsultaOutput> buscarPorId(@PathVariable UUID consultaId) {
-        return buscarConsultaUseCase.executar(consultaId)
+    public ResponseEntity<ConsultaOutput> buscarPorId(@PathVariable UUID consultaId,
+                                                      Authentication authentication) {
+        return buscarConsultaUseCase.executar(consultaId, usuarioAutenticado(authentication))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -74,11 +74,12 @@ public class ConsultaController {
             @RequestParam(required = false) LocalDateTime dataHoraInicio,
             @RequestParam(required = false) LocalDateTime dataHoraFim,
             @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanho) {
+            @RequestParam(defaultValue = "20") int tamanho,
+            Authentication authentication) {
         ListarConsultasInput input = new ListarConsultasInput(
                 pacienteId, dentistaId, status, dataHoraInicio, dataHoraFim, pagina, tamanho
         );
-        return ResponseEntity.ok(listarConsultasUseCase.executar(input));
+        return ResponseEntity.ok(listarConsultasUseCase.executar(input, usuarioAutenticado(authentication)));
     }
 
     @PostMapping("/cancelar")

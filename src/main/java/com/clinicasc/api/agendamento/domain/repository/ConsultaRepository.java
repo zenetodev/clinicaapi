@@ -7,7 +7,6 @@ import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.List;
 import java.util.UUID;
 
 public interface ConsultaRepository {

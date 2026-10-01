@@ -36,28 +36,28 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
     }
 
-        @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<ErroResponse> handleValidacao(MethodArgumentNotValidException exception) {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroResponse> handleValidacao(MethodArgumentNotValidException exception) {
         Map<String, String> erros = exception.getBindingResult()
-            .getFieldErrors()
-            .stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                fieldError -> fieldError.getDefaultMessage() != null
-                    ? fieldError.getDefaultMessage()
-                    : "Valor inválido.",
-                (mensagemAtual, mensagemAnterior) -> mensagemAtual,
-                LinkedHashMap::new
-            ));
+                .getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        fieldError -> fieldError.getDefaultMessage() != null
+                                ? fieldError.getDefaultMessage()
+                                : "Valor inválido.",
+                        (mensagemAtual, mensagemAnterior) -> mensagemAtual,
+                        LinkedHashMap::new
+                ));
 
         ErroResponse erro = new ErroResponse(
-            "Dados de entrada inválidos.",
-            OffsetDateTime.now(),
-            erros
+                "Dados de entrada inválidos.",
+                OffsetDateTime.now(),
+                erros
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
-        }
+    }
 
-        public record ErroResponse(String mensagem, OffsetDateTime timestamp, Map<String, String> erros) {
+    public record ErroResponse(String mensagem, OffsetDateTime timestamp, Map<String, String> erros) {
     }
 }

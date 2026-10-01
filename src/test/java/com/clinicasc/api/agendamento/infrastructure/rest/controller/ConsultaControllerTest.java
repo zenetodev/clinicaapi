@@ -10,6 +10,7 @@ import com.clinicasc.api.agendamento.application.usecase.ListarConsultasUseCase;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
 import com.clinicasc.api.agendamento.infrastructure.rest.exceptionhandler.ApiExceptionHandler;
 import com.clinicasc.api.usuario.application.service.JwtTokenService;
+import com.clinicasc.api.usuario.infrastructure.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,11 +28,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ConsultaController.class)
-@Import(ApiExceptionHandler.class)
+@Import({ApiExceptionHandler.class, SecurityConfig.class})
 class ConsultaControllerTest {
 
     @Autowired
@@ -61,6 +63,7 @@ class ConsultaControllerTest {
         when(agendarConsultaUseCase.executar(any())).thenReturn(novaConsulta(consultaId));
 
         mockMvc.perform(post("/agendamentos")
+                        .with(user("paciente").roles("PACIENTE"))
                         .contentType("application/json")
                         .content("""
                                 {
@@ -78,6 +81,7 @@ class ConsultaControllerTest {
     @Test
     void deveRetornar400QuandoDadosObrigatoriosNaoForemInformados() throws Exception {
         mockMvc.perform(post("/agendamentos")
+                        .with(user("paciente").roles("PACIENTE"))
                         .contentType("application/json")
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -91,7 +95,8 @@ class ConsultaControllerTest {
         UUID consultaId = UUID.randomUUID();
         when(buscarConsultaUseCase.executar(consultaId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/agendamentos/{consultaId}", consultaId))
+        mockMvc.perform(get("/agendamentos/{consultaId}", consultaId)
+                .with(user("paciente").roles("PACIENTE")))
                 .andExpect(status().isNotFound());
     }
 
@@ -104,6 +109,7 @@ class ConsultaControllerTest {
         ));
 
         mockMvc.perform(get("/agendamentos")
+                        .with(user("paciente").roles("PACIENTE"))
                         .param("pacienteId", pacienteId.toString())
                         .param("dentistaId", dentistaId.toString())
                         .param("status", "AGENDADA")
@@ -117,6 +123,28 @@ class ConsultaControllerTest {
                     .andExpect(jsonPath("$.totalPaginas").value(1));
 
         verify(listarConsultasUseCase).executar(any());
+    }
+
+    @Test
+    void deveBloquearPacienteAoConfirmarConsulta() throws Exception {
+        mockMvc.perform(post("/agendamentos/confirmar")
+                        .with(user("paciente").roles("PACIENTE"))
+                        .contentType("application/json")
+                        .content("{\"consultaId\":\"" + UUID.randomUUID() + "\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void devePermitirDentistaAoConfirmarConsulta() throws Exception {
+        UUID consultaId = UUID.randomUUID();
+        when(confirmarConsultaUseCase.executar(any())).thenReturn(novaConsulta(consultaId));
+
+        mockMvc.perform(post("/agendamentos/confirmar")
+                        .with(user("dentista").roles("DENTISTA"))
+                        .contentType("application/json")
+                        .content("{\"consultaId\":\"" + consultaId + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(consultaId.toString()));
     }
 
     private ConsultaOutput novaConsulta(UUID consultaId) {

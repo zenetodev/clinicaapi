@@ -6,12 +6,14 @@ import com.clinicasc.api.agendamento.application.dto.ConfirmarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaPageOutput;
 import com.clinicasc.api.agendamento.application.dto.ListarConsultasInput;
+import com.clinicasc.api.agendamento.application.dto.UsuarioAutenticado;
 import com.clinicasc.api.agendamento.application.usecase.AgendarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.BuscarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.CancelarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.ConfirmarConsultaUseCase;
 import com.clinicasc.api.agendamento.application.usecase.ListarConsultasUseCase;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
+import com.clinicasc.api.usuario.domain.model.TipoUsuario;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -50,8 +53,9 @@ public class ConsultaController {
     }
 
     @PostMapping
-    public ResponseEntity<ConsultaOutput> agendar(@Valid @RequestBody AgendarConsultaInput input) {
-        ConsultaOutput output = agendarConsultaUseCase.executar(input);
+    public ResponseEntity<ConsultaOutput> agendar(@Valid @RequestBody AgendarConsultaInput input,
+                                                  Authentication authentication) {
+        ConsultaOutput output = agendarConsultaUseCase.executar(input, usuarioAutenticado(authentication));
         return ResponseEntity.status(HttpStatus.CREATED).body(output);
     }
 
@@ -78,14 +82,26 @@ public class ConsultaController {
     }
 
     @PostMapping("/cancelar")
-    public ResponseEntity<ConsultaOutput> cancelar(@Valid @RequestBody CancelarConsultaInput input) {
-        ConsultaOutput output = cancelarConsultaUseCase.executar(input);
+    public ResponseEntity<ConsultaOutput> cancelar(@Valid @RequestBody CancelarConsultaInput input,
+                                                   Authentication authentication) {
+        ConsultaOutput output = cancelarConsultaUseCase.executar(input, usuarioAutenticado(authentication));
         return ResponseEntity.ok(output);
     }
 
     @PostMapping("/confirmar")
-    public ResponseEntity<ConsultaOutput> confirmar(@Valid @RequestBody ConfirmarConsultaInput input) {
-        ConsultaOutput output = confirmarConsultaUseCase.executar(input);
+    public ResponseEntity<ConsultaOutput> confirmar(@Valid @RequestBody ConfirmarConsultaInput input,
+                                                    Authentication authentication) {
+        ConsultaOutput output = confirmarConsultaUseCase.executar(input, usuarioAutenticado(authentication));
         return ResponseEntity.ok(output);
+    }
+
+    private UsuarioAutenticado usuarioAutenticado(Authentication authentication) {
+        UUID id = UUID.fromString(authentication.getName());
+        String autoridade = authentication.getAuthorities().stream()
+                .findFirst()
+                .orElseThrow()
+                .getAuthority()
+                .replace("ROLE_", "");
+        return new UsuarioAutenticado(id, TipoUsuario.valueOf(autoridade));
     }
 }

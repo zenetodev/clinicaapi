@@ -2,11 +2,13 @@ package com.clinicasc.api.agendamento.application.usecase;
 
 import com.clinicasc.api.agendamento.application.dto.ConfirmarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
+import com.clinicasc.api.agendamento.application.dto.UsuarioAutenticado;
 import com.clinicasc.api.agendamento.domain.exception.RegraDeNegocioException;
 import com.clinicasc.api.agendamento.domain.model.Consulta;
 import com.clinicasc.api.agendamento.domain.model.ConsultaId;
 import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
+import com.clinicasc.api.usuario.domain.model.TipoUsuario;
 import com.clinicasc.api.agendamento.domain.repository.ConsultaRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +37,15 @@ class ConfirmarConsultaUseCaseTest {
     @Test
     void deveConfirmarConsultaAgendada() {
         UUID consultaId = UUID.randomUUID();
-        Consulta consulta = novaConsulta(consultaId);
+        UUID dentistaId = UUID.randomUUID();
+        Consulta consulta = novaConsulta(consultaId, dentistaId);
         when(consultaRepository.buscarPorId(ConsultaId.de(consultaId))).thenReturn(Optional.of(consulta));
         when(consultaRepository.salvar(consulta)).thenReturn(consulta);
 
-        ConsultaOutput output = useCase.executar(new ConfirmarConsultaInput(consultaId));
+        ConsultaOutput output = useCase.executar(
+            new ConfirmarConsultaInput(consultaId),
+            new UsuarioAutenticado(dentistaId, TipoUsuario.DENTISTA)
+        );
 
         assertEquals(StatusConsulta.CONFIRMADA, output.status());
         verify(consultaRepository).salvar(consulta);
@@ -51,14 +57,17 @@ class ConfirmarConsultaUseCaseTest {
         when(consultaRepository.buscarPorId(ConsultaId.de(consultaId))).thenReturn(Optional.empty());
 
         assertThrows(RegraDeNegocioException.class,
-                () -> useCase.executar(new ConfirmarConsultaInput(consultaId)));
+            () -> useCase.executar(
+                new ConfirmarConsultaInput(consultaId),
+                new UsuarioAutenticado(UUID.randomUUID(), TipoUsuario.DENTISTA)
+            ));
     }
 
-    private Consulta novaConsulta(UUID consultaId) {
+        private Consulta novaConsulta(UUID consultaId, UUID dentistaId) {
         return new Consulta(
                 ConsultaId.de(consultaId),
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+            UUID.randomUUID(),
+            dentistaId,
                 new PeriodoConsulta(LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(1)),
                 StatusConsulta.AGENDADA,
                 null

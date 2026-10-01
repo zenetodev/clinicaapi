@@ -2,6 +2,8 @@ package com.clinicasc.api.agendamento.application.usecase;
 
 import com.clinicasc.api.agendamento.application.dto.AgendarConsultaInput;
 import com.clinicasc.api.agendamento.application.dto.ConsultaOutput;
+import com.clinicasc.api.agendamento.application.dto.UsuarioAutenticado;
+import com.clinicasc.api.agendamento.domain.exception.AcessoNegadoException;
 import com.clinicasc.api.agendamento.domain.exception.RegraDeNegocioException;
 import com.clinicasc.api.agendamento.domain.model.Consulta;
 import com.clinicasc.api.agendamento.domain.model.PeriodoConsulta;
@@ -19,7 +21,11 @@ public class AgendarConsultaUseCase {
     }
 
     @Transactional
-    public ConsultaOutput executar(AgendarConsultaInput input) {
+    public ConsultaOutput executar(AgendarConsultaInput input, UsuarioAutenticado usuario) {
+        if (usuario.tipo() != com.clinicasc.api.usuario.domain.model.TipoUsuario.PACIENTE
+                || !usuario.id().equals(input.pacienteId())) {
+            throw new AcessoNegadoException("O paciente autenticado só pode agendar consultas para si mesmo.");
+        }
         PeriodoConsulta periodo = new PeriodoConsulta(input.dataHoraInicio(), input.dataHoraFim());
 
         if (consultaRepository.existeConflitoDeHorario(input.dentistaId(), periodo)) {

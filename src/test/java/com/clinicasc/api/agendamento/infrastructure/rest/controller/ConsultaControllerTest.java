@@ -36,6 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({ApiExceptionHandler.class, SecurityConfig.class})
 class ConsultaControllerTest {
 
+    private static final UUID PACIENTE_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID DENTISTA_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -60,10 +63,10 @@ class ConsultaControllerTest {
     @Test
     void deveRetornar201AoAgendarConsulta() throws Exception {
         UUID consultaId = UUID.randomUUID();
-        when(agendarConsultaUseCase.executar(any())).thenReturn(novaConsulta(consultaId));
+        when(agendarConsultaUseCase.executar(any(), any())).thenReturn(novaConsulta(consultaId));
 
         mockMvc.perform(post("/agendamentos")
-                        .with(user("paciente").roles("PACIENTE"))
+                        .with(user(PACIENTE_ID.toString()).roles("PACIENTE"))
                         .contentType("application/json")
                         .content("""
                                 {
@@ -72,7 +75,7 @@ class ConsultaControllerTest {
                                   "dataHoraInicio": "2030-01-10T10:00:00",
                                   "dataHoraFim": "2030-01-10T11:00:00"
                                 }
-                                """.formatted(UUID.randomUUID(), UUID.randomUUID())))
+                                """.formatted(PACIENTE_ID, DENTISTA_ID)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(consultaId.toString()))
                 .andExpect(jsonPath("$.status").value("AGENDADA"));
@@ -81,7 +84,7 @@ class ConsultaControllerTest {
     @Test
     void deveRetornar400QuandoDadosObrigatoriosNaoForemInformados() throws Exception {
         mockMvc.perform(post("/agendamentos")
-                        .with(user("paciente").roles("PACIENTE"))
+                        .with(user(PACIENTE_ID.toString()).roles("PACIENTE"))
                         .contentType("application/json")
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -96,7 +99,7 @@ class ConsultaControllerTest {
         when(buscarConsultaUseCase.executar(consultaId)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/agendamentos/{consultaId}", consultaId)
-                .with(user("paciente").roles("PACIENTE")))
+                        .with(user(PACIENTE_ID.toString()).roles("PACIENTE")))
                 .andExpect(status().isNotFound());
     }
 
@@ -109,7 +112,7 @@ class ConsultaControllerTest {
         ));
 
         mockMvc.perform(get("/agendamentos")
-                        .with(user("paciente").roles("PACIENTE"))
+                        .with(user(PACIENTE_ID.toString()).roles("PACIENTE"))
                         .param("pacienteId", pacienteId.toString())
                         .param("dentistaId", dentistaId.toString())
                         .param("status", "AGENDADA")
@@ -128,7 +131,7 @@ class ConsultaControllerTest {
     @Test
     void deveBloquearPacienteAoConfirmarConsulta() throws Exception {
         mockMvc.perform(post("/agendamentos/confirmar")
-                        .with(user("paciente").roles("PACIENTE"))
+                        .with(user(PACIENTE_ID.toString()).roles("PACIENTE"))
                         .contentType("application/json")
                         .content("{\"consultaId\":\"" + UUID.randomUUID() + "\"}"))
                 .andExpect(status().isForbidden());
@@ -137,10 +140,10 @@ class ConsultaControllerTest {
     @Test
     void devePermitirDentistaAoConfirmarConsulta() throws Exception {
         UUID consultaId = UUID.randomUUID();
-        when(confirmarConsultaUseCase.executar(any())).thenReturn(novaConsulta(consultaId));
+        when(confirmarConsultaUseCase.executar(any(), any())).thenReturn(novaConsulta(consultaId));
 
         mockMvc.perform(post("/agendamentos/confirmar")
-                        .with(user("dentista").roles("DENTISTA"))
+                .with(user(DENTISTA_ID.toString()).roles("DENTISTA"))
                         .contentType("application/json")
                         .content("{\"consultaId\":\"" + consultaId + "\"}"))
                 .andExpect(status().isOk())

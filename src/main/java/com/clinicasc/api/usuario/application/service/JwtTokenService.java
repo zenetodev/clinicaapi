@@ -2,6 +2,8 @@ package com.clinicasc.api.usuario.application.service;
 
 import com.clinicasc.api.usuario.domain.model.Usuario;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,5 +42,12 @@ public class JwtTokenService {
 
     public long getExpirationSeconds() {
         return expirationSeconds;
+    }
+
+    public Jws<Claims> validar(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token);
     }
 }

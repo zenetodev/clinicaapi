@@ -9,6 +9,7 @@ import com.clinicasc.api.agendamento.application.usecase.ConfirmarConsultaUseCas
 import com.clinicasc.api.agendamento.application.usecase.ListarConsultasUseCase;
 import com.clinicasc.api.agendamento.domain.model.StatusConsulta;
 import com.clinicasc.api.agendamento.infrastructure.rest.exceptionhandler.ApiExceptionHandler;
+import com.clinicasc.api.usuario.application.service.JwtTokenService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -50,6 +51,9 @@ class ConsultaControllerTest {
 
     @MockitoBean
     private ListarConsultasUseCase listarConsultasUseCase;
+
+    @MockitoBean
+    private JwtTokenService jwtTokenService;
 
     @Test
     void deveRetornar201AoAgendarConsulta() throws Exception {
